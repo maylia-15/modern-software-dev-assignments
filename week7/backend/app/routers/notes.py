@@ -3,13 +3,24 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import asc, desc, select
 from sqlalchemy.orm import Session
+from pydantic import BaseModel, field_validator
 
 from ..db import get_db
 from ..models import Note
-from ..schemas import NoteCreate, NotePatch, NoteRead
+from ..schemas import NoteCreate, NoteRead
 
 router = APIRouter(prefix="/notes", tags=["notes"])
 
+class NotePatch(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+
+    @field_validator("title", "content")
+    @classmethod
+    def not_empty(cls, v):
+        if v is not None and not v.strip():
+            raise ValueError("Field cannot be empty or whitespace")
+        return v
 
 @router.get("/", response_model=list[NoteRead])
 def list_notes(
@@ -48,13 +59,23 @@ def patch_note(note_id: int, payload: NotePatch, db: Session = Depends(get_db)) 
     note = db.get(Note, note_id)
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
+
+    if payload.title is None and payload.content is None:
+        raise HTTPException(status_code=400, detail="No fields to update")
+
     if payload.title is not None:
         note.title = payload.title
     if payload.content is not None:
         note.content = payload.content
-    db.add(note)
-    db.flush()
-    db.refresh(note)
+
+    try:
+        db.add(note)
+        db.flush()
+        db.refresh(note)
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Database error")
+
     return NoteRead.model_validate(note)
 
 
@@ -64,5 +85,3 @@ def get_note(note_id: int, db: Session = Depends(get_db)) -> NoteRead:
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
     return NoteRead.model_validate(note)
-
-
