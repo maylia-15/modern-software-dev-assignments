@@ -38,36 +38,36 @@ c. Graphite Diamond generated code review
 
 ## Task 3: Try adding a new model and relationships
 a. Links to relevant commits/issues
-> TODO
+> https://app.graphite.com/github/pr/maylia-15/modern-software-dev-assignments/4
 
 b. PR Description
-> TODO
+> Implemented a Many-to-Many relationship between Note and Tag models using a note_tags association table. Added endpoints to associate and remove tags, and updated NoteRead schema to include nested tag data.
 
 c. Graphite Diamond generated code review
 > Graphite Diamond confirmed that the Many-to-Many implementation using an association table (note_tags) and SQLAlchemy's relationship with back_populates was correctly implemented without any architectural issues.
 
 ## Task 4: Improve tests for pagination and sorting
 a. Links to relevant commits/issues
-> TODO
+> https://app.graphite.com/github/pr/maylia-15/modern-software-dev-assignments/5
 
 b. PR Description
-> TODO
+> Added automated tests in test_pagination.py to verify limit, skip, and sort parameters. Ensured that sorting by title and creation date (ascending/descending) works correctly using consistent test data.
 
 c. Graphite Diamond generated code review
-> TODO
+> The AI found no issues, confirming that the test suite effectively covers pagination edge cases and correctly utilizes the client fixture for API testing.
 
 ## Brief Reflection 
 a. The types of comments you typically made in your manual reviews (e.g., correctness, performance, security, naming, test gaps, API shape, UX, docs).
-> TODO 
+> I focused on Correctness and Environment Compatibility, specifically catching ValidationError during schema mapping and fixing the Windows-specific PermissionError during test database cleanup.
 
 b. A comparison of **your** comments vs. **Graphite’s** AI-generated comments for each PR.
-> TODO
+> My comments were focused on runtime bugs and integration logic, while Graphite's comments were more focused on architectural standards and ensuring the code followed Python best practices.
 
 c. When the AI reviews were better/worse than yours (cite specific examples)
-> TODO
+> AI was better at ensuring clean code structure and naming conventions. However, AI was worse at detecting integration-level errors, such as the missing description field in the Pydantic schema which I had to debug manually.
 
 d. Your comfort level trusting AI reviews going forward and any heuristics for when to rely on them.
->TODO 
+>I am comfortable using AI for static code quality and security checks. My heuristic is to rely on AI for "cleanliness" but always perform manual testing for complex integration and OS-specific issues.
 
 
 
