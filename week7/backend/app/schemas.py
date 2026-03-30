@@ -45,4 +45,19 @@ class ActionItemPatch(BaseModel):
     description: str | None = None
     completed: bool | None = None
 
+class TagRead(BaseModel):
+    id: int
+    name: str
+    class Config:
+        from_attributes = True
 
+class NoteRead(BaseModel):
+    id: int
+    title: str
+    content: str
+    created_at: datetime
+    updated_at: datetime
+    tags: list[TagRead] = [] 
+
+    class Config:
+        from_attributes = True
