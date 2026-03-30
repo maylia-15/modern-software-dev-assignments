@@ -44,7 +44,7 @@ b. PR Description
 > TODO
 
 c. Graphite Diamond generated code review
-> TODO
+> Graphite Diamond confirmed that the Many-to-Many implementation using an association table (note_tags) and SQLAlchemy's relationship with back_populates was correctly implemented without any architectural issues.
 
 ## Task 4: Improve tests for pagination and sorting
 a. Links to relevant commits/issues
