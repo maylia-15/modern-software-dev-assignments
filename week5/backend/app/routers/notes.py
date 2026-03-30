@@ -21,7 +21,7 @@ def list_notes(db: Session = Depends(get_db)) -> list[NoteRead]:
 def create_note(payload: NoteCreate, db: Session = Depends(get_db)) -> NoteRead:
     note = Note(title=payload.title, content=payload.content)
     db.add(note)
-    db.flush()
+    db.commit()
     db.refresh(note)
     return NoteRead.model_validate(note)
 
@@ -32,16 +32,57 @@ def search_notes(q: Optional[str] = None, db: Session = Depends(get_db)) -> list
         rows = db.execute(select(Note)).scalars().all()
     else:
         rows = (
-            db.execute(select(Note).where((Note.title.contains(q)) | (Note.content.contains(q))))
+            db.execute(
+                select(Note).where(
+                    (Note.title.contains(q)) |
+                    (Note.content.contains(q))
+                )
+            )
             .scalars()
             .all()
         )
+
     return [NoteRead.model_validate(row) for row in rows]
 
 
 @router.get("/{note_id}", response_model=NoteRead)
 def get_note(note_id: int, db: Session = Depends(get_db)) -> NoteRead:
     note = db.get(Note, note_id)
+
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
+
     return NoteRead.model_validate(note)
+
+
+@router.put("/{note_id}", response_model=NoteRead)
+def update_note(
+    note_id: int,
+    payload: NoteCreate,
+    db: Session = Depends(get_db),
+) -> NoteRead:
+    note = db.get(Note, note_id)
+
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+
+    note.title = payload.title
+    note.content = payload.content
+
+    db.commit()
+    db.refresh(note)
+
+    return NoteRead.model_validate(note)
+
+
+@router.delete("/{note_id}")
+def delete_note(note_id: int, db: Session = Depends(get_db)):
+    note = db.get(Note, note_id)
+
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+
+    db.delete(note)
+    db.commit()
+
+    return {"message": "Note deleted"}
