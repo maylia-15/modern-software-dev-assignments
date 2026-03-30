@@ -8,6 +8,7 @@ from pydantic import BaseModel, field_validator
 from ..db import get_db
 from ..models import Note
 from ..schemas import NoteCreate, NoteRead
+from ..models import Tag
 
 router = APIRouter(prefix="/notes", tags=["notes"])
 
@@ -84,4 +85,46 @@ def get_note(note_id: int, db: Session = Depends(get_db)) -> NoteRead:
     note = db.get(Note, note_id)
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
+    return NoteRead.model_validate(note)
+
+@router.post("/{note_id}/tags/{tag_name}", response_model=NoteRead)
+def add_tag_to_note(note_id: int, tag_name: str, db: Session = Depends(get_db)) -> NoteRead:
+    note = db.get(Note, note_id)
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+
+    tag_name = tag_name.strip().lower()
+    stmt = select(Tag).where(Tag.name == tag_name)
+    tag = db.execute(stmt).scalars().first()
+
+    if not tag:
+        tag = Tag(name=tag_name)
+        db.add(tag)
+        db.flush()
+
+    if tag not in note.tags:
+        note.tags.append(tag)
+        db.add(note)
+        db.flush()
+        db.refresh(note)
+
+    return NoteRead.model_validate(note)
+
+@router.delete("/{note_id}/tags/{tag_name}", response_model=NoteRead)
+def remove_tag_from_note(note_id: int, tag_name: str, db: Session = Depends(get_db)) -> NoteRead:
+    note = db.get(Note, note_id)
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+
+    tag_name = tag_name.strip().lower()
+    tag = next((t for t in note.tags if t.name == tag_name), None)
+
+    if not tag:
+        raise HTTPException(status_code=404, detail="Tag not associated with this note")
+
+    note.tags.remove(tag)
+    db.add(note)
+    db.flush()
+    db.refresh(note)
+
     return NoteRead.model_validate(note)
