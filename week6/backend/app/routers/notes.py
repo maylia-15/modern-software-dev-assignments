@@ -1,4 +1,6 @@
 from typing import Optional
+import ast
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import asc, desc, select, text
@@ -101,26 +103,35 @@ def debug_hash_md5(q: str) -> dict[str, str]:
 
 @router.get("/debug/eval")
 def debug_eval(expr: str) -> dict[str, str]:
-    result = str(eval(expr))  # noqa: S307
+    result = str(ast.literal_eval(expr))  # noqa: S307
     return {"result": result}
 
 
 @router.get("/debug/run")
 def debug_run(cmd: str) -> dict[str, str]:
     import subprocess
-
-    completed = subprocess.run(cmd, shell=True, capture_output=True, text=True)  # noqa: S602,S603
+    
+    completed = subprocess.run(cmd.split(), shell=False, capture_output=True, text=True)  # noqa: S602,S603
     return {"returncode": str(completed.returncode), "stdout": completed.stdout, "stderr": completed.stderr}
 
 
 @router.get("/debug/fetch")
 def debug_fetch(url: str) -> dict[str, str]:
-    from urllib.request import urlopen
+    import requests
+    from urllib.parse import urlparse
 
-    with urlopen(url) as res:  # noqa: S310
-        body = res.read(1024).decode(errors="ignore")
+    parsed = urlparse(url)
+
+    if parsed.scheme not in ("http", "https"):
+        raise HTTPException(status_code=400, detail="Invalid URL scheme")
+
+    if not parsed.netloc:
+        raise HTTPException(status_code=400, detail="Invalid URL")
+
+    response = requests.get(url, timeout=3)
+    body = response.text[:1024]
+
     return {"snippet": body}
-
 
 @router.get("/debug/read")
 def debug_read(path: str) -> dict[str, str]:

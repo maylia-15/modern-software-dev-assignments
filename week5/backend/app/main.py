@@ -9,7 +9,24 @@ from .models import Base
 from .routers import action_items as action_items_router
 from .routers import notes as notes_router
 
+from fastapi.responses import JSONResponse
+from fastapi import Request
+from fastapi.exceptions import HTTPException
+
 app = FastAPI(title="Modern Software Dev Starter (Week 5)")
+@app.exception_handler(HTTPException)
+async def custom_http_exception_handler(request: Request, exc: HTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "ok": False,
+            "error": {
+                "code": "ERROR",
+                "message": exc.detail,
+            },
+        },
+    )
+
 
 # Ensure data dir exists
 Path("data").mkdir(parents=True, exist_ok=True)

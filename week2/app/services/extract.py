@@ -87,3 +87,51 @@ def _looks_imperative(sentence: str) -> bool:
         "investigate",
     }
     return first.lower() in imperative_starters
+
+def extract_action_items_llm(text: str) -> List[str]:
+    if not text.strip():
+        return []
+
+    prompt = f"""
+You are an assistant that extracts actionable tasks from notes.
+
+Return ONLY a JSON array of strings.
+Each string should be a concise action item.
+Do not include explanations.
+Do not include markdown.
+Do not include code fences.
+
+Notes:
+{text}
+"""
+
+    try:
+        response = chat(
+            model="llama3.1:8b",
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        content = response["message"]["content"]
+
+        print("========== RAW LLM OUTPUT ==========")
+        print(content)
+        print("====================================")
+
+        try:
+            action_items = json.loads(content)
+        except json.JSONDecodeError:
+            import re
+            match = re.search(r"\[.*\]", content, re.DOTALL)
+            if match:
+                action_items = json.loads(match.group())
+            else:
+                return []
+
+        if isinstance(action_items, list):
+            return [str(item).strip() for item in action_items if str(item).strip()]
+
+        return []
+
+    except Exception as e:
+        print("LLM ERROR:", e)
+        return []
