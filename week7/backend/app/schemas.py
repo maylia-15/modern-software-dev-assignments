@@ -26,6 +26,8 @@ class NotePatch(BaseModel):
 
 class ActionItemCreate(BaseModel):
     description: str
+    due_date: str | None = None   
+    priority: str | None = None   
 
 
 class ActionItemRead(BaseModel):
