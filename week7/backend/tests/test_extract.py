@@ -9,9 +9,13 @@ def test_extract_action_items():
     - Ship it!
     Not actionable
     """.strip()
+    
     items = extract_action_items(text)
-    assert "TODO: write tests" in items
-    assert "ACTION: review PR" in items
-    assert "Ship it!" in items
+    
+    descriptions = [item.description for item in items]
+    
+    assert "- TODO: write tests" in descriptions
+    assert "- ACTION: review PR" in descriptions
+    assert "- Ship it!" in descriptions
 
 
